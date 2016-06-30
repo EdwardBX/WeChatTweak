@@ -1,0 +1,17 @@
+Package: xbx.wechatTweak
+Name: wechatTweak
+Version: 0.1-1
+Description: 
+Section: Tweaks
+Depends: firmware (>= 5.0), mobilesubstrate
+Conflicts: 
+Replaces: 
+Priority: optional
+Architecture: iphoneos-arm
+Author: bx_1512
+dev: 
+Homepage: 
+Depiction: 
+Maintainer: 
+Icon: 
+

@@ -23,6 +23,7 @@
 //   5. (optionally) call old method using CHSuper()
 
 static BOOL isAddingFriend = NO;
+static BOOL shakeOn = NO;
 
 @interface wechatTweak : NSObject
 
@@ -41,7 +42,7 @@ static BOOL isAddingFriend = NO;
 
 @end
 
-#pragma mark - ----ShakeViewController
+#pragma mark - ----ShakeViewController 自动摇一摇功能
 @class ShakeViewController;
 
 CHDeclareClass(ShakeViewController);
@@ -52,24 +53,47 @@ CHOptimizedMethod(0, self, void, ShakeViewController, viewDidLoad) {
     
     UINavigationItem *navigatItem = [self performSelector:@selector(navigationItem)];
     NSArray *array = navigatItem.rightBarButtonItems;
-    UIBarButtonItem *rightBarButtonItem = [[UIBarButtonItem alloc]initWithTitle:@"多摇几次" style:UIBarButtonItemStylePlain target:self action:@selector(addShakeTimer)];
+    UIBarButtonItem *rightBarButtonItem = [[UIBarButtonItem alloc]initWithTitle:@"开始" style:UIBarButtonItemStylePlain target:self action:@selector(startShake)];
+    shakeOn = NO;
     NSMutableArray *rights = [[NSMutableArray alloc]initWithArray:array];
     [rights addObject:rightBarButtonItem];
     navigatItem.rightBarButtonItems = rights;
 }
 
-CHDeclareMethod0(void, ShakeViewController, addShakeTimer) {
-    NSTimer *timer = [[NSTimer alloc] initWithFireDate:[NSDate distantPast] interval:8.0 target:self selector:@selector(shakeItShake) userInfo:nil repeats: YES];
-    [[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+CHOptimizedMethod(0, self, void, ShakeViewController, onFinishShowAnimation) {
+    CHSuper(0, ShakeViewController, onFinishShowAnimation);
+    
+    if (shakeOn == YES) {
+        [self performSelector:@selector(OnShake) withObject:nil afterDelay:1];
+    }
 }
 
-CHDeclareMethod0(void, ShakeViewController, shakeItShake) {
-    [self performSelector:@selector(OnShake)];
-    [NSThread sleepForTimeInterval:1];
-    [self performSelector:@selector(onShakeStop)];
+CHOptimizedMethod(1, self, void, ShakeViewController, onShakeReportFail, id, arg1) {
+    CHSuper(1, ShakeViewController, onShakeReportFail, arg1);
+    
+    if (shakeOn == YES) {
+        [self performSelector:@selector(OnShake) withObject:nil afterDelay:1];
+    }
 }
 
-#pragma mark - ----ChatRoomInfoViewController
+CHDeclareMethod0(void, ShakeViewController, startShake) {
+    if (shakeOn == NO) {
+        shakeOn = YES;
+        UINavigationItem *navigatItem = [self performSelector:@selector(navigationItem)];
+        NSArray *array = navigatItem.rightBarButtonItems;
+        [(UIBarButtonItem *)[array lastObject] performSelector:@selector(setTitle:) withObject:@"暂停"];
+        [self performSelector:@selector(OnShake)];
+        
+    } else {
+        UINavigationItem *navigatItem = [self performSelector:@selector(navigationItem)];
+        NSArray *array = navigatItem.rightBarButtonItems;
+        [(UIBarButtonItem *)[array lastObject] performSelector:@selector(setTitle:) withObject:@"开始"];
+        
+        shakeOn = NO;
+    }
+}
+
+#pragma mark - ----ChatRoomInfoViewController 自动加群聊好友
 @class ChatRoomInfoViewController;
 
 CHDeclareClass(ChatRoomInfoViewController);
@@ -233,8 +257,10 @@ CHConstructor // code block that runs immediately upon load
 		
         CHLoadLateClass(ShakeViewController);
         CHLoadLateClass(ChatRoomInfoViewController);
-        CHLoadClass(UIView);
+        CHLoadLateClass(UIView);
 		CHHook(0, ShakeViewController, viewDidLoad);
+        CHHook(0, ShakeViewController, onFinishShowAnimation);
+        CHHook(1, ShakeViewController, onShakeReportFail);
         CHHook(0, ChatRoomInfoViewController, viewDidLoad);
         CHHook(1, UIView, addSubview);
         CHHook(2, ChatRoomInfoViewController, alertView, clickedButtonAtIndex);

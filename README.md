@@ -1,4 +1,4 @@
-###iOS非越狱环境应用插件开发流程     
+## iOS非越狱环境应用插件开发流程     
 * class-dump (获取已脱壳应用的头文件)
 * ida (反汇编得到方法的具体实现)
 * Cycript (动态调试获得更多信息)
@@ -6,7 +6,7 @@
 * yololib (在可执行文件中注入动态库)
 * iOSOpenDev (在 XCode 中生成动态库)
 
-###定位目标函数     
+### 定位目标函数     
 在掌握上文所述工具后，就可以着手进行插件的开发。首先应该思考插件要实现的需求，找到相关的视图和控制器。第一步可以先使用 class-dump 分析已砸壳的 APP，class-dump 可以根据 Mach-O 文件中的符号表( symbol table )分析出所有的类名和方法声明。 
     
 ```bash
@@ -31,7 +31,7 @@
 	```
 	通过上述格式，能把某函数中的逻辑一步步解析出来。这里如果再辅以 LLDB 的动态单步调试，在某句汇编语句的地址下断点跟踪调试，有助于理解功能实现的细节。
 
-###Hook 目标函数       
+### Hook 目标函数       
 Hook 目标函数有很多种方案，但原理上都是基于 Objective-C 的动态特性进行 Method Swizzling 来替换原有的实现。本次将详细介绍 CaptainHook 库的使用方法。这个库是基于 Cydia Substrate 中的 `MSHookMessageEx()`来实现的，该函数的声明为：
 
 ```
@@ -61,7 +61,7 @@ CHDeclareMethod0(void, BXViewController, addFriends) {
 
 编写完成后，连接手头的 iPhone 进行编译，确保生成对应架构的动态库。      
 
-###插入动态库        
+### 插入动态库        
 借助工具 yololib 将编译好的 dylib 文件注入到 Mach-O 可执行文件的 Load Commands 列表中。       
 
 ```bash
@@ -121,5 +121,5 @@ Mach-O 文件的结构主要包括三大部分。最前端的部分是 Header �
 	fwrite([data bytes], [data length], 1, newFile);
 	```
 
-###APP 重签名       
+### APP 重签名       
 用`codesign`命令重签名生成的动态库和 APP 中所有的可执行文件（包括 Plugin 文件夹中的 APP Extension），用`xcrun -sdk iphoneos PackageApplication -v`命令将动态库和所有文件一起打包，整个过程你懂的。如果有企业证书，进行签名打包后的应用可以安装在信任该证书的非越狱 iPhone 上。一颗赛艇！
